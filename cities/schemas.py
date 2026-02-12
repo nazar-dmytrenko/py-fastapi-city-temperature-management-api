@@ -10,7 +10,10 @@ class CityCreate(CityBase):
     pass
 
 
-class CityRead(CityBase):
+class City(CityBase):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+CityRead = City

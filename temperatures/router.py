@@ -2,7 +2,6 @@ import asyncio
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 from dependencies import get_db
@@ -19,19 +18,12 @@ router = APIRouter(
 
 @router.post("/update", status_code=201)
 async def update_temperatures(db: Session = Depends(get_db)):
-    cities = await run_in_threadpool(city_crud.get_all_cities, db)
+    cities = city_crud.get_all_cities(db)
+    temperatures = await asyncio.gather(*(fetch_temperature(city.name) for city in cities))
 
-    async def update_city_temperature(city):
-        temp = await fetch_temperature(city.name)
-        if temp is not None:
-            await run_in_threadpool(
-                temp_crud.create_temperature,
-                db,
-                city.id,
-                temp
-            )
-
-    await asyncio.gather(*(update_city_temperature(city) for city in cities))
+    for city, temperature in zip(cities, temperatures):
+        if temperature is not None:
+            temp_crud.create_temperature(db, city.id, temperature)
 
     return {"message": "Temperatures updated successfully"}
 

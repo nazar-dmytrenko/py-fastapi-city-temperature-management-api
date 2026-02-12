@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 
 from . import crud, schemas
@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=schemas.CityRead, status_code=201)
+@router.post("/", response_model=schemas.City, status_code=201)
 def create_city(city: schemas.CityCreate, db: Session = Depends(get_db)):
     db_city = crud.get_city_by_name(db=db, name=city.name)
 
@@ -24,12 +24,12 @@ def create_city(city: schemas.CityCreate, db: Session = Depends(get_db)):
     return crud.create_city(db=db, city=city)
 
 
-@router.get("/", response_model=list[schemas.CityRead])
+@router.get("/", response_model=list[schemas.City])
 def read_cities(db: Session = Depends(get_db)):
     return crud.get_all_cities(db=db)
 
 
-@router.get("/{city_id}", response_model=schemas.CityRead)
+@router.get("/{city_id}", response_model=schemas.City)
 def read_single_city(city_id: int, db: Session = Depends(get_db)):
     db_city = crud.get_city(db=db, city_id=city_id)
 
@@ -39,7 +39,7 @@ def read_single_city(city_id: int, db: Session = Depends(get_db)):
     return db_city
 
 
-@router.put("/{city_id}", response_model=schemas.CityRead)
+@router.put("/{city_id}", response_model=schemas.City)
 def update_city(city_id: int, city_data: schemas.CityCreate, db: Session = Depends(get_db)):
     db_city = crud.update_city(db=db, city_id=city_id, city_data=city_data)
 
@@ -51,7 +51,9 @@ def update_city(city_id: int, city_data: schemas.CityCreate, db: Session = Depen
 
 @router.delete("/{city_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_city(city_id: int, db: Session = Depends(get_db)):
-    db_city = crud.delete_city(db=db, city_id=city_id)
+    deleted = crud.delete_city(db=db, city_id=city_id)
 
-    if not db_city:
+    if not deleted:
         raise HTTPException(status_code=404, detail="City not found")
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
