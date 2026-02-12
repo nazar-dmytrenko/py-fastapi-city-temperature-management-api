@@ -22,7 +22,7 @@ def get_all_cities(db: Session):
 
 
 def get_city(db: Session, city_id: int):
-    return db.scalars(select(models.City).where(models.City.id == city_id))
+    return db.scalars(select(models.City).where(models.City.id == city_id)).first()
 
 
 def get_city_by_name(db: Session, name: str):
